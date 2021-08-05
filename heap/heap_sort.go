@@ -8,12 +8,6 @@ type Heap struct {
 	heapArray []*Node
 }
 
-func (heap *Heap) PrintHeap() {
-	for _, node := range heap.heapArray {
-		println(node.Key)
-	}
-}
-
 func (heap *Heap) Insert(key int) int {
 	if heap.heapArray == nil {
 		heap.heapArray = make([]*Node, 0)
@@ -39,10 +33,9 @@ func (heap *Heap) Remove() *Node {
 		return nil
 	}
 	root := heap.heapArray[0]
-	heap.heapArray[0] = heap.heapArray[len(heap.heapArray)-1]
+	heap.heapArray[0], heap.heapArray[len(heap.heapArray)-1] = heap.heapArray[len(heap.heapArray)-1], root
 	heap.heapArray = heap.heapArray[:len(heap.heapArray)-1] // cut last element of slice
 	heap.trickleDown(0)
-	heap.PrintHeap()
 	return root
 }
 
@@ -70,4 +63,14 @@ func (heap *Heap) trickleDown(index int) int {
 	}
 	heap.heapArray[index] = movedTop
 	return index
+}
+
+func (heap Heap) Sort(values []int) []*Node {
+	length := len(values)
+	for _, key := range values {
+		heap.Insert(key)
+	}
+	for heap.Remove() != nil {
+	}
+	return heap.heapArray[:length]
 }
