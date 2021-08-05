@@ -16,14 +16,14 @@ func TestBuildTree(t *testing.T) {
 	}{
 		{
 			name: "case1",
-			args: args{ []int{5,1,3,8,2,4} },
+			args: args{[]int{5, 1, 3, 8, 2, 4}},
 			want: &tree{
 				value: 5,
 				left: &tree{
 					value: 1,
 					right: &tree{
 						value: 3,
-						left: &tree{value: 2},
+						left:  &tree{value: 2},
 						right: &tree{value: 4},
 					},
 				},
@@ -52,7 +52,7 @@ func Test_add(t *testing.T) {
 	}{
 		{
 			name: "case0",
-			args: args{ value: 5, t: nil},
+			args: args{value: 5, t: nil},
 			want: &tree{value: 5, left: nil, right: nil},
 		},
 		{
@@ -61,13 +61,13 @@ func Test_add(t *testing.T) {
 				value: 1,
 				t: &tree{
 					value: 5,
-					left: nil,
+					left:  nil,
 					right: nil,
 				},
 			},
 			want: &tree{
 				value: 5,
-				left: &tree{value: 1, left: nil, right: nil},
+				left:  &tree{value: 1, left: nil, right: nil},
 				right: nil,
 			},
 		},

@@ -1,7 +1,7 @@
 package sort
 
 type tree struct {
-	value int
+	value       int
 	left, right *tree
 }
 
