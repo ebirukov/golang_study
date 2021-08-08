@@ -1,6 +1,18 @@
 package sort
 
-func Sort(values []int) []int {
+import "sort"
+
+func LibInsertionSort(arr []int) []int {
+	data := sort.IntSlice(arr)
+	for i := 1; i < data.Len(); i++ {
+		for j := i; j > 0 && data.Less(j, j-1); j-- {
+			data.Swap(j, j-1)
+		}
+	}
+	return data
+}
+
+func InsertionSort(values []int) []int {
 	for current := 1; current < len(values); current++ {
 		leftIdx := current
 		checkedValue := values[current]
