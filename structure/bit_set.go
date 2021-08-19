@@ -7,6 +7,14 @@ import (
 
 const CAPACITY = 64
 
+/*var pc [256]byte
+
+func init() {
+	for i := range pc {
+		pc[i] = pc[i/2] + byte(i&1)
+	}
+}
+*/
 type IntSet struct {
 	words []uint64
 }
@@ -19,19 +27,6 @@ func (s *IntSet) Clear() {
 	for i := 0; i < len(s.words); i++ {
 		s.words[i] = 0
 	}
-}
-
-func (s *IntSet) Len() int {
-	cnt := 0
-	for _, bits := range s.words {
-		if bits == 0 {
-			continue
-		}
-		for i := 0; i < CAPACITY; i++ {
-			cnt += int(bits >> i & 1)
-		}
-	}
-	return cnt
 }
 
 func (s *IntSet) Add(v int) *IntSet {
@@ -103,4 +98,26 @@ func (s *IntSet) String() string {
 	}
 	buffer.WriteByte('}')
 	return buffer.String()
+}
+
+func popcnt(x uint64) int
+
+func (s *IntSet) Len() int {
+	cnt := 0
+	//btsMask := getMasks()
+	for _, x := range s.words {
+		if x == 0 {
+			continue
+		}
+		cnt += popcnt(x)
+		/*		cnt+= int(pc[byte(x>>(0*8))] +
+				pc[byte(x>>(1*8))] +
+				pc[byte(x>>(2*8))] +
+				pc[byte(x>>(3*8))] +
+				pc[byte(x>>(4*8))] +
+				pc[byte(x>>(5*8))] +
+				pc[byte(x>>(6*8))] +
+				pc[byte(x>>(7*8))])*/
+	}
+	return cnt
 }

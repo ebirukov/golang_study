@@ -338,6 +338,10 @@ func BenchmarkIntSet_Len500000(b *testing.B) {
 	benchmarkIntSetLen(b, 500000)
 }
 
+func BenchmarkIntSet_Len1000000(b *testing.B) {
+	benchmarkIntSetLen(b, 1000000)
+}
+
 func benchmarkIntSetLen(b *testing.B, size int) {
 	set := filledSet(size)
 	var length int
