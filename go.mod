@@ -3,7 +3,6 @@ module golang_study
 go 1.16
 
 require (
-	github.com/clausecker/pospop v1.2.2 // indirect
 	github.com/mmcloughlin/avo v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/exp v0.0.0-20210817205419-cf631fceb1a5 // indirect
