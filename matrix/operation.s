@@ -2,6 +2,18 @@
 
 #include "textflag.h"
 
+DATA mask<>+0(SB)/8, $0x0000000100000001
+DATA mask<>+8(SB)/8, $0x0000000100000001
+DATA mask<>+16(SB)/8, $0x0000000100000001
+DATA mask<>+24(SB)/8, $0x0000000100000001
+GLOBL mask<>(SB), RODATA|NOPTR, $32
+
+DATA mask64<>+0(SB)/8, $0x0000000000000001
+DATA mask64<>+8(SB)/8, $0x0000000000000001
+DATA mask64<>+16(SB)/8, $0x0000000000000001
+DATA mask64<>+24(SB)/8, $0x0000000000000001
+GLOBL mask64<>(SB), RODATA|NOPTR, $32
+
 // func multipleMicroCore(a []float32, b []float32, c []float32)
 // Requires: AVX, FMA3
 TEXT ·multipleMicroCore(SB), NOSPLIT, $0-72
@@ -61,4 +73,682 @@ TEXT ·multipleMicroCore(SB), NOSPLIT, $0-72
 	VMOVUPS Y11, 128(DX)
 	VMOVUPS Y12, 160(DX)
 	VMOVUPS Y13, 192(DX)
+	RET
+
+	// multiplying 8x3 matrix by 8x8 matrix with single precision numbers
+
+// func MultipleMicroCore16x8(a []float32, b []float32, c []float32)
+// Requires: AVX, AVX2, FMA3
+TEXT ·MultipleMicroCore16x8(SB), NOSPLIT, $0-72
+	MOVQ a_base+0(FP), AX
+	MOVQ b_base+24(FP), CX
+	MOVQ c_base+48(FP), DX
+	VZEROALL
+
+	// load data of slice b to YMM registers
+	VMOVUPS (AX), Y0
+	VMOVUPS 32(AX), Y1
+
+	// load data of slice b to YMM registers
+	VMOVUPS (CX), Y2
+	VMOVUPS 32(CX), Y3
+	VMOVUPS 64(CX), Y4
+	VMOVUPS 96(CX), Y5
+	VMOVUPS 128(CX), Y6
+	VMOVUPS 160(CX), Y7
+	VMOVUPS 192(CX), Y8
+	VMOVUPS 224(CX), Y9
+
+	// load c values to YMM registers
+	VMOVUPS (DX), Y10
+	VMOVUPS 32(DX), Y11
+	VMOVUPS mask<>+0(SB), Y12
+
+	// broadcast 32-bit packed 0 element from register of vector a[0] to all elements of temporary vector a[0:0] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:0] * b[0] + c[0]
+	VFMADD231PS Y14, Y2, Y10
+
+	// increment index mask for select 0 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 1 element from register of vector a[0] to all elements of temporary vector a[0:1] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:1] * b[1] + c[0]
+	VFMADD231PS Y14, Y3, Y10
+
+	// increment index mask for select 1 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 2 element from register of vector a[0] to all elements of temporary vector a[0:2] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:2] * b[2] + c[0]
+	VFMADD231PS Y14, Y4, Y10
+
+	// increment index mask for select 2 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 3 element from register of vector a[0] to all elements of temporary vector a[0:3] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:3] * b[3] + c[0]
+	VFMADD231PS Y14, Y5, Y10
+
+	// increment index mask for select 3 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 4 element from register of vector a[0] to all elements of temporary vector a[0:4] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:4] * b[4] + c[0]
+	VFMADD231PS Y14, Y6, Y10
+
+	// increment index mask for select 4 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 5 element from register of vector a[0] to all elements of temporary vector a[0:5] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:5] * b[5] + c[0]
+	VFMADD231PS Y14, Y7, Y10
+
+	// increment index mask for select 5 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 6 element from register of vector a[0] to all elements of temporary vector a[0:6] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:6] * b[6] + c[0]
+	VFMADD231PS Y14, Y8, Y10
+
+	// increment index mask for select 6 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 7 element from register of vector a[0] to all elements of temporary vector a[0:7] register 
+	VPERMPS Y0, Y13, Y14
+
+	// operation with vector registers c[0] = a[0:7] * b[7] + c[0]
+	VFMADD231PS Y14, Y9, Y10
+
+	// increment index mask for select 7 packed element
+	VADDPS Y12, Y13, Y13
+
+	// clear permutation index mask
+	VXORPS Y13, Y13, Y13
+
+	// broadcast 32-bit packed 0 element from register of vector a[1] to all elements of temporary vector a[1:0] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:0] * b[0] + c[1]
+	VFMADD231PS Y14, Y2, Y11
+
+	// increment index mask for select 0 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 1 element from register of vector a[1] to all elements of temporary vector a[1:1] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:1] * b[1] + c[1]
+	VFMADD231PS Y14, Y3, Y11
+
+	// increment index mask for select 1 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 2 element from register of vector a[1] to all elements of temporary vector a[1:2] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:2] * b[2] + c[1]
+	VFMADD231PS Y14, Y4, Y11
+
+	// increment index mask for select 2 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 3 element from register of vector a[1] to all elements of temporary vector a[1:3] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:3] * b[3] + c[1]
+	VFMADD231PS Y14, Y5, Y11
+
+	// increment index mask for select 3 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 4 element from register of vector a[1] to all elements of temporary vector a[1:4] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:4] * b[4] + c[1]
+	VFMADD231PS Y14, Y6, Y11
+
+	// increment index mask for select 4 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 5 element from register of vector a[1] to all elements of temporary vector a[1:5] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:5] * b[5] + c[1]
+	VFMADD231PS Y14, Y7, Y11
+
+	// increment index mask for select 5 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 6 element from register of vector a[1] to all elements of temporary vector a[1:6] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:6] * b[6] + c[1]
+	VFMADD231PS Y14, Y8, Y11
+
+	// increment index mask for select 6 packed element
+	VADDPS Y12, Y13, Y13
+
+	// broadcast 32-bit packed 7 element from register of vector a[1] to all elements of temporary vector a[1:7] register 
+	VPERMPS Y1, Y13, Y14
+
+	// operation with vector registers c[1] = a[1:7] * b[7] + c[1]
+	VFMADD231PS Y14, Y9, Y11
+
+	// increment index mask for select 7 packed element
+	VADDPS Y12, Y13, Y13
+
+	// clear permutation index mask
+	VXORPS Y13, Y13, Y13
+
+	// store results to slice res
+	VMOVUPS Y10, (DX)
+	VMOVUPS Y11, 32(DX)
+	RET
+
+	// multiplying 8x3 matrix by 8x8 matrix with single precision numbers
+
+// func MultipleMicroCore24x8(a []float32, b []float32, c []float32)
+// Requires: AVX, AVX2, FMA3
+TEXT ·MultipleMicroCore24x8(SB), NOSPLIT, $0-72
+	MOVQ a_base+0(FP), AX
+	MOVQ b_base+24(FP), CX
+	MOVQ c_base+48(FP), DX
+	VZEROALL
+
+	// load data of slice a to YMM registers
+	VMOVUPS (AX), Y0
+	VMOVUPS 32(AX), Y1
+	VMOVUPS 64(AX), Y2
+
+	// load data of slice b to YMM registers
+	VMOVUPS (CX), Y3
+	VMOVUPS 32(CX), Y4
+	VMOVUPS 64(CX), Y5
+	VMOVUPS 96(CX), Y6
+	VMOVUPS 128(CX), Y7
+	VMOVUPS 160(CX), Y8
+	VMOVUPS 192(CX), Y9
+	VMOVUPS 224(CX), Y10
+
+	// load data of slice c to YMM registers
+	VMOVUPS (DX), Y11
+	VMOVUPS 32(DX), Y12
+	VMOVUPS 64(DX), Y13
+
+	// broadcast 32-bit packed 0 element from register of vector a[0] to all elements of temporary vector a[0:0] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:0] * b[0] + c[0]
+	VFMADD231PS Y15, Y3, Y11
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[0] to all elements of temporary vector a[0:1] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:1] * b[1] + c[0]
+	VFMADD231PS Y15, Y4, Y11
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[0] to all elements of temporary vector a[0:2] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:2] * b[2] + c[0]
+	VFMADD231PS Y15, Y5, Y11
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[0] to all elements of temporary vector a[0:3] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:3] * b[3] + c[0]
+	VFMADD231PS Y15, Y6, Y11
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 4 element from register of vector a[0] to all elements of temporary vector a[0:4] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:4] * b[4] + c[0]
+	VFMADD231PS Y15, Y7, Y11
+
+	// increment index mask for select 4 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 5 element from register of vector a[0] to all elements of temporary vector a[0:5] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:5] * b[5] + c[0]
+	VFMADD231PS Y15, Y8, Y11
+
+	// increment index mask for select 5 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 6 element from register of vector a[0] to all elements of temporary vector a[0:6] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:6] * b[6] + c[0]
+	VFMADD231PS Y15, Y9, Y11
+
+	// increment index mask for select 6 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 7 element from register of vector a[0] to all elements of temporary vector a[0:7] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:7] * b[7] + c[0]
+	VFMADD231PS Y15, Y10, Y11
+
+	// increment index mask for select 7 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[1] to all elements of temporary vector a[1:0] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:0] * b[0] + c[1]
+	VFMADD231PS Y15, Y3, Y12
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[1] to all elements of temporary vector a[1:1] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:1] * b[1] + c[1]
+	VFMADD231PS Y15, Y4, Y12
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[1] to all elements of temporary vector a[1:2] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:2] * b[2] + c[1]
+	VFMADD231PS Y15, Y5, Y12
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[1] to all elements of temporary vector a[1:3] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:3] * b[3] + c[1]
+	VFMADD231PS Y15, Y6, Y12
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 4 element from register of vector a[1] to all elements of temporary vector a[1:4] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:4] * b[4] + c[1]
+	VFMADD231PS Y15, Y7, Y12
+
+	// increment index mask for select 4 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 5 element from register of vector a[1] to all elements of temporary vector a[1:5] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:5] * b[5] + c[1]
+	VFMADD231PS Y15, Y8, Y12
+
+	// increment index mask for select 5 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 6 element from register of vector a[1] to all elements of temporary vector a[1:6] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:6] * b[6] + c[1]
+	VFMADD231PS Y15, Y9, Y12
+
+	// increment index mask for select 6 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 7 element from register of vector a[1] to all elements of temporary vector a[1:7] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:7] * b[7] + c[1]
+	VFMADD231PS Y15, Y10, Y12
+
+	// increment index mask for select 7 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[2] to all elements of temporary vector a[2:0] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:0] * b[0] + c[2]
+	VFMADD231PS Y15, Y3, Y13
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[2] to all elements of temporary vector a[2:1] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:1] * b[1] + c[2]
+	VFMADD231PS Y15, Y4, Y13
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[2] to all elements of temporary vector a[2:2] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:2] * b[2] + c[2]
+	VFMADD231PS Y15, Y5, Y13
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[2] to all elements of temporary vector a[2:3] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:3] * b[3] + c[2]
+	VFMADD231PS Y15, Y6, Y13
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 4 element from register of vector a[2] to all elements of temporary vector a[2:4] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:4] * b[4] + c[2]
+	VFMADD231PS Y15, Y7, Y13
+
+	// increment index mask for select 4 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 5 element from register of vector a[2] to all elements of temporary vector a[2:5] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:5] * b[5] + c[2]
+	VFMADD231PS Y15, Y8, Y13
+
+	// increment index mask for select 5 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 6 element from register of vector a[2] to all elements of temporary vector a[2:6] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:6] * b[6] + c[2]
+	VFMADD231PS Y15, Y9, Y13
+
+	// increment index mask for select 6 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 7 element from register of vector a[2] to all elements of temporary vector a[2:7] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:7] * b[7] + c[2]
+	VFMADD231PS Y15, Y10, Y13
+
+	// increment index mask for select 7 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// store results to slice c
+	VMOVUPS Y11, (DX)
+	VMOVUPS Y12, 32(DX)
+	VMOVUPS Y13, 64(DX)
+	RET
+
+	// multiplying 4x5 matrix by 4x4 matrix with double precision numbers
+
+// func MultipleMicroCore4x5by4x4(a []float64, b []float64, c []float64)
+// Requires: AVX, AVX2, FMA3
+TEXT ·MultipleMicroCore4x5by4x4(SB), NOSPLIT, $0-72
+	MOVQ a_base+0(FP), AX
+	MOVQ b_base+24(FP), CX
+	MOVQ c_base+48(FP), DX
+	VZEROALL
+
+	// load data of slice a to YMM registers
+	VMOVUPD (AX), Y0
+	VMOVUPD 32(AX), Y1
+	VMOVUPD 64(AX), Y2
+	VMOVUPD 96(AX), Y3
+	VMOVUPD 128(AX), Y4
+
+	// load data of slice b to YMM registers
+	VMOVUPD (CX), Y5
+	VMOVUPD 32(CX), Y6
+	VMOVUPD 64(CX), Y7
+	VMOVUPD 96(CX), Y8
+
+	// load data of slice c to YMM registers
+	VMOVUPD (DX), Y9
+	VMOVUPD 32(DX), Y10
+	VMOVUPD 64(DX), Y11
+	VMOVUPD 96(DX), Y12
+	VMOVUPD 128(DX), Y13
+
+	// broadcast 32-bit packed 0 element from register of vector a[0] to all elements of temporary vector a[0:0] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:0] * b[0] + c[0]
+	VFMADD231PD Y15, Y5, Y9
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[0] to all elements of temporary vector a[0:1] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:1] * b[1] + c[0]
+	VFMADD231PD Y15, Y6, Y9
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[0] to all elements of temporary vector a[0:2] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:2] * b[2] + c[0]
+	VFMADD231PD Y15, Y7, Y9
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[0] to all elements of temporary vector a[0:3] register 
+	VPERMPS Y0, Y14, Y15
+
+	// operation with vector registers c[0] = a[0:3] * b[3] + c[0]
+	VFMADD231PD Y15, Y8, Y9
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[1] to all elements of temporary vector a[1:0] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:0] * b[0] + c[1]
+	VFMADD231PD Y15, Y5, Y10
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[1] to all elements of temporary vector a[1:1] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:1] * b[1] + c[1]
+	VFMADD231PD Y15, Y6, Y10
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[1] to all elements of temporary vector a[1:2] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:2] * b[2] + c[1]
+	VFMADD231PD Y15, Y7, Y10
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[1] to all elements of temporary vector a[1:3] register 
+	VPERMPS Y1, Y14, Y15
+
+	// operation with vector registers c[1] = a[1:3] * b[3] + c[1]
+	VFMADD231PD Y15, Y8, Y10
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[2] to all elements of temporary vector a[2:0] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:0] * b[0] + c[2]
+	VFMADD231PD Y15, Y5, Y11
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[2] to all elements of temporary vector a[2:1] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:1] * b[1] + c[2]
+	VFMADD231PD Y15, Y6, Y11
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[2] to all elements of temporary vector a[2:2] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:2] * b[2] + c[2]
+	VFMADD231PD Y15, Y7, Y11
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[2] to all elements of temporary vector a[2:3] register 
+	VPERMPS Y2, Y14, Y15
+
+	// operation with vector registers c[2] = a[2:3] * b[3] + c[2]
+	VFMADD231PD Y15, Y8, Y11
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[3] to all elements of temporary vector a[3:0] register 
+	VPERMPS Y3, Y14, Y15
+
+	// operation with vector registers c[3] = a[3:0] * b[0] + c[3]
+	VFMADD231PD Y15, Y5, Y12
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[3] to all elements of temporary vector a[3:1] register 
+	VPERMPS Y3, Y14, Y15
+
+	// operation with vector registers c[3] = a[3:1] * b[1] + c[3]
+	VFMADD231PD Y15, Y6, Y12
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[3] to all elements of temporary vector a[3:2] register 
+	VPERMPS Y3, Y14, Y15
+
+	// operation with vector registers c[3] = a[3:2] * b[2] + c[3]
+	VFMADD231PD Y15, Y7, Y12
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[3] to all elements of temporary vector a[3:3] register 
+	VPERMPS Y3, Y14, Y15
+
+	// operation with vector registers c[3] = a[3:3] * b[3] + c[3]
+	VFMADD231PD Y15, Y8, Y12
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// broadcast 32-bit packed 0 element from register of vector a[4] to all elements of temporary vector a[4:0] register 
+	VPERMPS Y4, Y14, Y15
+
+	// operation with vector registers c[4] = a[4:0] * b[0] + c[4]
+	VFMADD231PD Y15, Y5, Y13
+
+	// increment index mask for select 0 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 1 element from register of vector a[4] to all elements of temporary vector a[4:1] register 
+	VPERMPS Y4, Y14, Y15
+
+	// operation with vector registers c[4] = a[4:1] * b[1] + c[4]
+	VFMADD231PD Y15, Y6, Y13
+
+	// increment index mask for select 1 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 2 element from register of vector a[4] to all elements of temporary vector a[4:2] register 
+	VPERMPS Y4, Y14, Y15
+
+	// operation with vector registers c[4] = a[4:2] * b[2] + c[4]
+	VFMADD231PD Y15, Y7, Y13
+
+	// increment index mask for select 2 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// broadcast 32-bit packed 3 element from register of vector a[4] to all elements of temporary vector a[4:3] register 
+	VPERMPS Y4, Y14, Y15
+
+	// operation with vector registers c[4] = a[4:3] * b[3] + c[4]
+	VFMADD231PD Y15, Y8, Y13
+
+	// increment index mask for select 3 packed element
+	VADDPS mask<>+0(SB), Y14, Y14
+
+	// clear permutation index mask
+	VXORPS Y14, Y14, Y14
+
+	// store results to slice c
+	VMOVUPD Y9, (DX)
+	VMOVUPD Y10, 32(DX)
+	VMOVUPD Y11, 64(DX)
+	VMOVUPD Y12, 96(DX)
+	VMOVUPD Y13, 128(DX)
 	RET

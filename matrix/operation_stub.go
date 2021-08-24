@@ -3,3 +3,9 @@
 package matrix
 
 func multipleMicroCore(a []float32, b []float32, c []float32)
+
+func MultipleMicroCore16x8(a []float32, b []float32, c []float32)
+
+func MultipleMicroCore24x8(a []float32, b []float32, c []float32)
+
+func MultipleMicroCore4x5by4x4(a []float64, b []float64, c []float64)

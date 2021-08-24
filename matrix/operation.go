@@ -84,10 +84,10 @@ func MultipleAVX(ma, mb *Matrix) *Matrix {
 	for i := 0; i < ma.height; i++ {
 		a := ma.data[ma.length*i:ma.length*(i+1)]
 		c := mc.data[i*mc.length:(i+1)*mc.length]
-		fmt.Printf("mc -%f\n", mc.data)
+		//fmt.Printf("mc -%f\n", mc.data)
 		for k := 0; k < ma.length; k++ {
 			b := mb.data[k*mb.length:(k+1)*mb.length]
-			fmt.Printf("c -%f\n", mc.data)
+			//fmt.Printf("c -%f\n", mc.data)
 			/*			fmt.Printf("a -%f\n", a)
 			fmt.Printf("b -%f\n", b)*/
 			multipleMicroCore(a[k:],b,c)

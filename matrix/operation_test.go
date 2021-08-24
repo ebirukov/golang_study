@@ -79,7 +79,7 @@ func BenchmarkMultipleVector1000x1000(b *testing.B) {
 	benchmarkMultiple(b, 1000, 1000, MultipleV)
 }
 
-func BenchmarkMultipleAVX2_8x8(b *testing.B) {
+func benchmarkMultipleAVX2_8x8(b *testing.B) {
 	benchmarkMultiple(b, 8, 8, MultipleAVX)
 }
 
@@ -93,6 +93,26 @@ func BenchmarkMultipleAVX2_1000x1000(b *testing.B) {
 
 func BenchmarkMultiple1000x1000(b *testing.B) {
 	benchmarkMultiple(b, 1000, 1000, Multiple)
+}
+
+
+var res []float32 = make([]float32, 24*8)
+
+func BenchmarkMultipleMicroCore24x8(b *testing.B) {
+	benchmarkMultipleMicroCore(b, 24, 8, MultipleMicroCore24x8)
+}
+
+func BenchmarkMultipleMicroCore16x8(b *testing.B) {
+	benchmarkMultipleMicroCore(b, 16, 8, MultipleMicroCore16x8)
+}
+
+func benchmarkMultipleMicroCore(b *testing.B, length, height int, coreMethod func([]float32, []float32, []float32)) {
+	ma := createMatrixValues(length*height)
+	mb := createMatrixValues(height*length)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		coreMethod(ma, mb, res)
+	}
 }
 
 func constMatrixValues(n int, value float32) []float32 {
